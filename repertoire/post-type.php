@@ -4,9 +4,10 @@ global $user_can_view;
 
 add_action( 'init', 'user_can_view', 0 );
 function user_can_view() {
-  global $user_can_view;
-  $user_can_view = protect_code(array(2, 3));
+	global $user_can_view;
+	$user_can_view = protect_code(array(2, 3));
 }
+
 
 /*----------------------------------------------------*/
 // Repertoire Media
@@ -40,12 +41,12 @@ function register_repertoire_media() {
     'read_private_posts'  => 'read_private_posts',
   );
   
-  $rewrite = array(
+	/*$rewrite = array(
     'slug'                => 'media',
     'with_front'          => true,
     'pages'               => false,
     'feeds'               => false,
-  );
+	);*/
   
   $args = array(
     'label'               => __( 'repertoire-media', 'lowrez' ),
@@ -54,7 +55,7 @@ function register_repertoire_media() {
     'supports'            => false,//array( 'title', 'custom-fields', ),
     //'taxonomies'          => array( 'media-type', 'part', 'concert' ),
     'hierarchical'        => false,
-    'public'              => $user_can_view,
+	  'public'              => false,//$user_can_view,
     'show_ui'             => true,
     'show_in_menu'        => true,
     'show_in_nav_menus'   => true,
@@ -62,10 +63,10 @@ function register_repertoire_media() {
     'menu_position'       => 29,
     'menu_icon'           => '',
     'can_export'          => true,
-    'has_archive'         => $user_can_view,
-    'exclude_from_search' => !$user_can_view,
-    'publicly_queryable'  => $user_can_view,
-    'rewrite'             => $rewrite,
+	  'has_archive'         => false,//$user_can_view,
+	  'exclude_from_search' => true,//!$user_can_view,
+	  'publicly_queryable'  => false, //$user_can_view,
+	  'rewrite'             => false,//$rewrite,
     'capabilities'        => $capabilities,
   );
   
@@ -73,6 +74,49 @@ function register_repertoire_media() {
 }
 
 add_action( 'init', 'register_repertoire_media', 0 );
+
+/*----------------------------------------------------*/
+
+function repertoire_updated_messages( $messages ) {
+	global $post, $post_ID;
+	
+	$messages['repertoire-media'] = array(
+		0 => '', // Unused. Messages start at index 1.
+		1 => sprintf( __('Repertoire media updated.')),// <a href="%s">View book</a>', 'lowrez'), esc_url( get_permalink($post_ID) ) ),
+		2 => __('Custom field updated.', 'lowrez'),
+		3 => __('Custom field deleted.', 'lowrez'),
+		4 => __('Repertoire media updated.', 'lowrez'),
+		/* translators: %s: date and time of the revision */
+		5 => isset($_GET['revision']) ? sprintf( __('Repertoire media restored to revision from %s', 'lowrez'), wp_post_revision_title( (int) $_GET['revision'], false ) ) : false,
+		6 => sprintf( __('Repertoire media published.')),// <a href="%s">View book</a>', 'lowrez'), esc_url( get_permalink($post_ID) ) ),
+		7 => __('Repertoire media saved.', 'lowrez'),
+		8 => sprintf( __('Repertoire media submitted.' //<a target="_blank" href="%s">Preview book</a>'
+						 , 'lowrez'), esc_url( add_query_arg( 'preview', 'true', get_permalink($post_ID) ) ) ),
+		9 => sprintf( __('Repertoire media scheduled for: <strong>%1$s</strong>.'),// <a target="_blank" href="%2$s">Preview book</a>', 'lowrez'),
+					 // translators: Publish box date format, see http://php.net/date
+					 date_i18n( __( 'M j, Y @ G:i' ), strtotime( $post->post_date ) ), esc_url( get_permalink($post_ID) ) ),
+		10 => sprintf( __('Repertoire media draft updated.')),// <a target="_blank" href="%s">Preview book</a>', 'lowrez'), esc_url( add_query_arg( 'preview', 'true', get_permalink($post_ID) ) ) ),
+	);
+	$messages['repertoire'] = array(
+		0 => '', // Unused. Messages start at index 1.
+		1 => sprintf( __('Repertoire updated. <a href="%s">View repertoire</a>', 'lowrez'), esc_url( get_permalink($post_ID) ) ),
+		2 => __('Custom field updated.', 'lowrez'),
+		3 => __('Custom field deleted.', 'lowrez'),
+		4 => __('Repertoire updated.', 'lowrez'),
+		/* translators: %s: date and time of the revision */
+		5 => isset($_GET['revision']) ? sprintf( __('Repertoire restored to revision from %s', 'lowrez'), wp_post_revision_title( (int) $_GET['revision'], false ) ) : false,
+		6 => sprintf( __('Repertoire published. <a href="%s">View repertoire</a>', 'lowrez'), esc_url( get_permalink($post_ID) ) ),
+		7 => __('Repertoire saved.', 'lowrez'),
+		8 => sprintf( __('Repertoire submitted. <a target="_blank" href="%s">Preview repertoire</a>', 'lowrez'), esc_url( add_query_arg( 'preview', 'true', get_permalink($post_ID) ) ) ),
+		9 => sprintf( __('Repertoire scheduled for: <strong>%1$s</strong>. <a target="_blank" href="%2$s">Preview repertoire</a>', 'lowrez'),
+					 // translators: Publish box date format, see http://php.net/date
+					 date_i18n( __( 'M j, Y @ G:i' ), strtotime( $post->post_date ) ), esc_url( get_permalink($post_ID) ) ),
+		10 => sprintf( __('Repertoire draft updated. <a target="_blank" href="%s">Preview repertoire</a>', 'lowrez'), esc_url( add_query_arg( 'preview', 'true', get_permalink($post_ID) ) ) ),
+	);
+	
+	return $messages;
+}
+add_filter( 'post_updated_messages', 'repertoire_updated_messages' );
 
 /*----------------------------------------------------*/
 
@@ -150,16 +194,16 @@ function nest_terms($taxonomy, $include, $nestable = false, &$nested_terms = arr
   else {
     
     if ($nestable == 'AB') {
-     
-		foreach ($terms as $term) {
-			//print_r($term);
-			if ($term->name == 'ensemble' && $taxonomy == 'part') {
-				$ensemble = ' (Ensemble)';
-			}
-			else {
-				$parents[$term->term_id] = $term;
-			}
-		}
+      
+      foreach ($terms as $term) {
+		  if ($term->slug == 'ensemble' && $taxonomy == 'part') {
+			  $ensemble = 'Ensemble';
+		  }
+		  else {
+			  $parents[$term->term_id] = $term;
+		  }
+      }
+
       
       $terms = $parents;
       
@@ -191,8 +235,11 @@ function nest_terms($taxonomy, $include, $nestable = false, &$nested_terms = arr
     $nested_terms = false;
   }
   
-  //print_pre($parents);
-  return $parents.$ensemble;
+	if ($ensemble) {
+		return "$ensemble ($parents)";
+	}
+	
+	return $ensemble.$parents;
   
 }
 
@@ -235,9 +282,21 @@ function save_repertoire_media_title($ignore) {
 					$album = $concert;
 				}
 				elseif (stripos($media_type, 'Original Recording')!==FALSE) {
-					$artist = array_shift(wp_get_post_terms($_POST['parent_id'], 'performer', array('fields' => 'names')));//implode(', ', );
+					if ($_POST['primary_performer']) {
+						$artist = get_term($_POST['primary_performer'], 'performer');
+					}
+						
+					if (is_object($artist)) {
+						$artist = $artist->name;
+					}
+					else {
+						$artist = array_shift(wp_get_post_terms($_POST['parent_id'], 'performer', array('fields' => 'names')));//implode(', ', );
+					}
+					
 					$album = 'Original Recording';
 					$post_title = implode(' - ', array_filter(compact('repertoire', 'artist', 'media_type')));
+					$concert = $artist;
+					$original = true;
 				}
 				else {
 					$artist = $part;
@@ -249,31 +308,47 @@ function save_repertoire_media_title($ignore) {
 				update_post_meta($post_id, 'podcast_album', $album);
 				update_post_meta($post_id, 'podcast_album_artist', $album_artist);
 				
-				$rename = true;
+				$rename = true;//FIXME
 				
 				$duration = false;
 				
 				define('LOCAL_ALBUM_COVER', true);
-				include_once('/home/lowrez/_dev/podcast/albumcover.php');
+				include_once('/home/lowrez/_prod/podcast/albumcover.php');
 								
 				$media_type_get = array_filter($_POST['tax_input']['media-type']);
-				$media_type_get = get_terms('media-type', array('include'=>$media_type_get));
+				$media_type_get = $media_type_get ? get_terms('media-type', array('include'=>$media_type_get)) : false;
 				
-				$part_get = array_filter($_POST['tax_input']['part']);
-				$part_get = get_terms('part', array('include'=>$part_get));
+				if (!$concert) {
+					$part_get = array_filter($_POST['tax_input']['part']);
+					$part_get = $part_get ? get_terms('part', array('include'=>$part_get)) : false;
+				}
 				
 				$terms = array();
 				
-				foreach ($media_type_get as $mt) {
-					$terms[0][] = $mt->slug;
+				if (is_array($media_type_get)) {
+					foreach ($media_type_get as $mt) {
+						$terms[0][] = $mt->slug;
+					}
+				} else {
+					$terms[0] = false;
 				}
-				foreach ($part_get as $mt) {
-					$terms[1][] = $mt->slug;
+				if (is_array($part_get)) {
+					foreach ($part_get as $mt) {
+						$terms[1][] = $mt->slug;
+					}
+				} else {
+					$terms[1] = false;
 				}
 				
-				if (!$picture = get_album_cover($terms)) {
+				//print_pre($terms);
+				
+				if (!$picture = get_album_cover($terms, $concert)) {
 					$picture = plugin_dir_path(__FILE__) . 'mp3tagger/albumcover.png';
 				}
+				
+				update_post_meta($post_id, 'podcast_album_cover', $picture);
+				
+				//echo $picture;
 				
 				$tagger->write($file, $title, $artist, $album, $album_artist, $picture, $duration);
 				
@@ -292,7 +367,12 @@ function save_repertoire_media_title($ignore) {
 					$basepath = $basepath['path'];
 					
 					if ($concert) {
-						$filename = $tagger->rename($file, $title, $album, 'Concert Recording', $basepath, $duration);
+						if ($original) {
+							$filename = $tagger->rename($file, $title, $artist, 'Original Recording', $basepath, $duration);
+						}
+						else {
+							$filename = $tagger->rename($file, $title, $album, 'Concert Recording', $basepath, $duration);
+						}
 					}
 					else {
 						if ($parts_nested) { $artist = array($parts_nested, $artist); }
@@ -416,6 +496,16 @@ function repertoire_column_widths() {
     border-radius: 100%;
     cursor:default;
   }
+	.column-this-season {
+    width: 40px;
+  }
+  .column-this-season .spinner {
+    margin:0;
+  }
+  th.column-this-season {
+    font-size: 0.9em;
+    line-height:95%;
+  }
 </style>
 <?php
   }
@@ -423,38 +513,47 @@ function repertoire_column_widths() {
 }
 
 function set_repertoire_column( $column, $post_id ) {
-  switch ( $column ) {
-    case 'song-year':
-    echo get_post_meta($post_id, 'song_year', true);
-    break;
-    case 'arrangement-year':
-    echo get_post_meta($post_id, 'arrangement_year', true);
-    break;
-    case 'this-season':
-    $this_season = get_post_meta($post_id, 'repertoire-this-season', true);
-    
-    printf('<input type="checkbox" class="ajax-this-season" name="repertoires-this-season[]" value="%s" %s /> <span class="spinner"></span>', $post_id, checked( $this_season, 'include', false ));
-    
-    break;
-    case 'repertoire-media':
-    
-    $args = array(
-      'numberposts' => -1,
-      'orderby' => 'name',
-      'post_type' => 'repertoire-media',
-      'post_parent' => $post_id
-    );
-    $medias = get_posts($args);
-    
-    if ($medias = count($medias)) {
-      printf('<a href="%s">[ %s ]</a>', admin_url('edit.php?post_type=repertoire-media&post_parent='.$post_id), $medias);    
-    }
-    else {
-      echo '&mdash;';
-    }
-    
-    break;
-  }
+	switch ( $column ) {
+		case 'song-year':
+		case 'arrangement-year':
+		$column = str_replace('-', '_', $column);
+		$year = get_post_meta($post_id, $column, true);
+		
+		$link = add_query_arg($column, $year ? $year : -1);
+		
+		printf('<a href="%s">%s</a>', $link, $year ? $year : '&mdash;');
+		break;
+		case 'this-season':
+		$this_season = get_post_meta($post_id, 'repertoire-this-season', true);
+		
+		printf('<input type="checkbox" class="ajax-this-season" name="repertoires-this-season[]" value="%s" %s title="This Season" /> ', $post_id, checked( $this_season, 'include', false ));
+		
+		$this_season_sup = get_post_meta($post_id, 'repertoire-this-season-sup', true);
+		
+		printf('(<input type="checkbox" class="ajax-this-season ajax-this-season-sup" name="repertoires-this-season-sup[]" value="%s" %s title="Supplementary"/>)', $post_id, checked( $this_season_sup, 'include', false ));
+		
+		echo '<span class="spinner"></span>';
+		
+		break;
+		case 'repertoire-media':
+		
+		$args = array(
+			'numberposts' => -1,
+			'orderby' => 'name',
+			'post_type' => 'repertoire-media',
+			'post_parent' => $post_id
+		);
+		$medias = get_posts($args);
+		
+		if ($medias = count($medias)) {
+			printf('<a href="%s">[ %s ]</a>', admin_url('edit.php?post_type=repertoire-media&post_parent='.$post_id), $medias);    
+		}
+		else {
+			echo '&mdash;';
+		}
+		
+		break;
+	}
 }
 
 add_action( 'manage_repertoire_posts_custom_column' , 'set_repertoire_column', 10, 2 );
@@ -509,73 +608,98 @@ add_filter( 'posts_clauses', 'repertoire_clauses', 10, 2 );
 
 add_filter( 'parse_query', 'sort_filter_repertoire' );
 function sort_filter_repertoire($query) {
-  global $current_screen;
-  if (is_admin() && in_array($current_screen->id,  array('edit-repertoire', 'edit-repertoire-media')) ) {
-    
-    if (!isset($_GET['orderby'])) {
-      $query->query_vars['orderby'] = 'name';
-      $query->query_vars['order'] = 'ASC';
-    }
-    
-    if ( $year = $_GET['song_year'] )  {
-      $query->query_vars['meta_query'][] = array(
-        'key' => 'song_year',
-        'value' => ($year == -1 ? '' : $year)
-      );
-    }
-    if ( $year = $_GET['arrangement_year'] )  {
-      $query->query_vars['meta_query'][] = array(
-        'key' => 'arrangement_year',
-        'value' => ($year == -1 ? '' : $year)
-      );
-    }
-    if ( $this_season = $_GET['this-season'] )  {
-      
-      $exist = array('include'=>'EXISTS', 'exclude'=>'NOT EXISTS');
-      
-      $query->query_vars['meta_query'][] = array(
-        'key' => 'repertoire-this-season',
-        'compare' => $exist[$this_season]
-      );
-    }
-    if ( $has_media = $_GET['has-media'] )  {
-      
-      
-      add_filter('posts_where', 'post_has_parent');
-      remove_filter( 'parse_query', 'sort_filter_repertoire' );
-      $args = array(
-        'post_type' => 'repertoire-media',
-        'numberposts' => '-1',
-      );
-      
-      $media_posts = get_posts($args);
-      remove_filter('posts_where', 'post_has_parent');
-      add_filter( 'parse_query', 'sort_filter_repertoire' );
-
-      $media_in = array();
-      foreach ($media_posts as $media_post) {
-        $media_in[] = $media_post->post_parent;
-      }
-      
-      $exist = array('include'=>'post__in', 'exclude'=>'post__not_in');
-      
-      $query->query_vars[$exist[$has_media]] = $media_in;
-
-    }
-    if ( $parent = $_GET['post_parent'] )  {
-      $query->query_vars['post_parent'] = $parent;
-    }
-  }
+	global $current_screen;
+	if (is_admin() && in_array($current_screen->id,  array('edit-repertoire', 'edit-repertoire-media')) ) {
+		
+		if (!isset($_GET['orderby'])) {
+			$query->query_vars['orderby'] = 'name';
+			$query->query_vars['order'] = 'ASC';
+		}
+		
+		if ( $year = $_GET['song_year'] )  {
+			$query->query_vars['meta_query'][] = array(
+				'key' => 'song_year',
+				'value' => ($year == -1 ? '' : $year)
+			);
+		}
+		if ( $year = $_GET['arrangement_year'] )  {
+			$query->query_vars['meta_query'][] = array(
+				'key' => 'arrangement_year',
+				'value' => ($year == -1 ? '' : $year)
+			);
+		}
+		if ( $this_season = $_GET['this-season'] )  {
+			
+			if ($this_season == 'sup') {
+				$query->query_vars['meta_query'][] = array(
+					'key' => 'repertoire-this-season-sup',
+					'compare' => 'EXISTS'
+				);
+			}
+			else {
+				$exist = array('include'=>'EXISTS', 'exclude'=>'NOT EXISTS');
+				$query->query_vars['meta_query'][] = array(
+					'key' => 'repertoire-this-season',
+					'compare' => $exist[$this_season]
+				);
+				if ($this_season == 'exclude') {
+					$query->query_vars['meta_query'][] = array(
+						'key' => 'repertoire-this-season-sup',
+						'compare' => 'NOT EXISTS'
+					);
+				}
+			}
+			
+		}
+		if ( $has_media = $_GET['has-media'] )  {
+			
+			add_filter('posts_where', 'post_has_parent');
+			remove_filter( 'parse_query', 'sort_filter_repertoire' );
+			$args = array(
+				'post_type' => 'repertoire-media',
+				'numberposts' => '-1',
+			);
+			
+			$media_posts = get_posts($args);
+			remove_filter('posts_where', 'post_has_parent');
+			add_filter( 'parse_query', 'sort_filter_repertoire' );
+			
+			$media_in = array();
+			foreach ($media_posts as $media_post) {
+				$media_in[] = $media_post->post_parent;
+			}
+			
+			$exist = array('include'=>'post__in', 'exclude'=>'post__not_in');
+			
+			$query->query_vars[$exist[$has_media]] = $media_in;
+			
+		}
+		if ( $parent = $_GET['post_parent'] )  {
+			$query->query_vars['post_parent'] = $parent;
+		}
+		if ( $mime_type = $_GET['post_mime_type'] )  {
+			$query->query_vars['post_mime_type'] = $mime_type;
+		}
+	}
 }
 function post_just_get_parent($fields, $and, $more) {
-  echo 'just';
-  print_pre($fields);
-  print_pre($and);print_pre($more);
-  return $fields;
+	echo 'just';
+	print_pre($fields);
+	print_pre($and);print_pre($more);
+	return $fields;
 }
 function post_has_parent($where = '') {
-    $where .= " AND post_parent > 0";
-    return $where;
+	$where .= " AND post_parent > 0";
+	return $where;
+}
+
+add_filter('mime_types', 'repertoire_mime_types');
+function repertoire_mime_types ( $mimes=array() ) {
+ 
+$mimes['sib'] = 'application/x-sibelius-score';
+
+return $mimes;
+
 }
 
 /*----------------------------------------------------*/
@@ -593,6 +717,7 @@ function my_restrict_manage_posts() {
     echo "<select name='this-season' id='this-season' class='postform'>";
     echo "<option value=''>Show all</option>";
     echo '<option value="include"', $_GET['this-season'] == 'include' ? ' selected="selected"' : '','>This Season</option>';// (' . $count_has .')
+	echo '<option value="sup"', $_GET['this-season'] == 'sup' ? ' selected="selected"' : '','>Supplementary</option>';// (' . $count_has .')
     echo '<option value="exclude"', $_GET['this-season'] == 'exclude' ? ' selected="selected"' : '','>Not This Season</option>';// (' . $count_hasnot .')
     echo "</select>";
     
@@ -613,7 +738,8 @@ function my_restrict_manage_posts() {
       $tax_obj = get_taxonomy($tax_slug);
       $tax_name = $tax_obj->labels->name;
       // retrieve array of term objects per taxonomy
-      $terms = get_terms($tax_slug);
+				$args = array('orderby' => 'slug');
+      $terms = get_terms($tax_slug, $args);
       
       // output html for taxonomy dropdown filter
       echo "<select name='$tax_slug' id='$tax_slug' class='postform'>";
@@ -661,6 +787,9 @@ ORDER  BY meta_value; ", $tax_slug );
       }
       echo "</select>";
     }
+	  
+	  printf('<a class="button" href="%s">Reset</a> ', admin_url('edit.php?post_type=repertoire'));
+	  
   }
   elseif ($typenow == 'repertoire-media') {
     
@@ -679,9 +808,9 @@ FROM   (SELECT DISTINCT children.post_parent,
                INNER JOIN $wpdb->posts AS parents 
                        ON children.post_parent = parents.id 
         WHERE  children.post_type = 'repertoire-media' 
-               AND children.post_status = 'publish') AS tmp_table 
+               ) AS tmp_table 
 GROUP  BY post_parent 
-ORDER  BY post_name; " ); 
+ORDER  BY post_name; " ); //AND children.post_status = 'publish'
       
       // output html for metadata dropdown filter
       $tax_slug = 'post_parent';
@@ -695,6 +824,34 @@ ORDER  BY post_name; " );
         echo '<option value='. $term->id, $_GET[$tax_slug] == $term->id ? ' selected="selected"' : '','>' . $term->value .' (' . $term->count .')</option>';
       }
       echo "</select>";
+	  
+	  /*-------------------------------------------------*/
+	  
+      // retrieve array of posts per meta value
+	  $terms = $wpdb->get_results("
+SELECT post_mime_type AS id, count(*) AS count
+FROM   $wpdb->posts
+WHERE  post_type = 'repertoire-media' 
+GROUP BY post_mime_type
+" ); //AND post_status = 'publish'
+      
+      // output html for metadata dropdown filter
+      $tax_slug = 'post_mime_type';
+      echo "<select name='$tax_slug' id='$tax_slug' class='postform'>";
+      echo "<option value=''>Show all File Types</option>";
+      foreach ($terms as $term) {
+		  if ( empty($term->id) ) {
+			  $term->value = '(Blank)';
+			  $term->id = '';
+		  }
+		  else {
+			  $term->value = $term->id; //FIXME
+		  }
+        echo '<option value='. $term->id, $_GET[$tax_slug] == $term->id ? ' selected="selected"' : '','>' . $term->value .' (' . $term->count .')</option>';
+      }
+      echo "</select>";
+	  
+	  /*-------------------------------------------------*/
     
     // create an array of taxonomy slugs you want to filter by - if you want to retrieve all taxonomies, could use get_taxonomies() to build the list
     $filters = array('media-type', 'part', 'concert');
@@ -704,6 +861,7 @@ ORDER  BY post_name; " );
       $tax_obj = get_taxonomy($tax_slug);
       $tax_name = $tax_obj->labels->name;
       // retrieve array of term objects per taxonomy
+				
       $terms = get_terms($tax_slug);
       
       // output html for taxonomy dropdown filter
@@ -715,6 +873,8 @@ ORDER  BY post_name; " );
       }
       echo "</select>";
     }  
+	  
+	  printf('<a class="button" href="%s">Reset</a> ', admin_url('edit.php?post_type=repertoire-media'));
 
   }
 }
@@ -732,6 +892,7 @@ function change_repertoire_media_columns( $cols ) {
   $middle = array(
     'file_name' => 'File Name',
     'repertoire' => 'Repertoire',
+	  'this-season' => 'This Season'
   );
   $last = array_splice($cols, 2);
   
@@ -770,6 +931,19 @@ function set_repertoire_media_column( $column, $post_id ) {
       echo '&mdash;';
     }
     
+    break;
+	  case 'this-season':
+	  $post = get_post($post_id);
+	  if ($parent = $post->post_parent) {
+		  
+		  $this_season = get_post_meta($parent, 'repertoire-this-season', true);
+		  
+		  printf('<input type="checkbox" %s title="This Season" disabled readonly /> ', checked( $this_season, 'include', false ));
+		  
+		  $this_season_sup = get_post_meta($parent, 'repertoire-this-season-sup', true);
+		  
+		  printf('(<input type="checkbox" %s title="Supplementary" disabled readonly />)', checked( $this_season_sup, 'include', false ));
+	  }
     break;
   }
 }
@@ -854,13 +1028,14 @@ function repertoire_table_ajax() {
 <script type="text/javascript">
   jQuery('.ajax-this-season').on('change', function () {
     
-    var spinner = jQuery(this).next('.spinner');
+    var spinner = jQuery(this).parent().find('.spinner');
     
     spinner.show();
     
     send = {
       action: 'change_repertoire_this_season',
       repertoire_id: jQuery(this).val(),
+		sup: jQuery(this).hasClass('ajax-this-season-sup'),
       checked: jQuery(this).is(':checked')
     };
     
@@ -896,18 +1071,39 @@ function change_repertoire_this_season() {
     if ($_POST['checked']) {
       
       $checked = $_POST['checked'] == 'true';
+		$sup = $_POST['sup'] == 'true' ? '-sup' : false;
       
       if (current_user_can('edit_posts')) {
         
         if ($checked) {
-          update_post_meta($repertoire, 'repertoire-this-season', 'include');
+          update_post_meta($repertoire, 'repertoire-this-season'.$sup, 'include');
         }
         else {
-          delete_post_meta($repertoire, 'repertoire-this-season');
+          delete_post_meta($repertoire, 'repertoire-this-season'.$sup);
         }
         
 		uncache_podcast($repertoire);
-        $checked = get_post_meta($repertoire, 'repertoire-this-season', true) == 'include' ? 'true' : 'false';
+		  
+		global $wpdb;
+
+		  $post_modified = current_time( 'mysql' );
+		  $post_modified_gmt = current_time( 'mysql', 1 );
+		  $wpdb->update($wpdb->posts,
+						array(
+							'post_modified' => $post_modified,
+							'post_modified_gmt' => $post_modified_gmt
+						),
+						array('ID' => $repertoire)
+					   );
+		  $wpdb->update($wpdb->posts,
+						array(
+							'post_modified' => $post_modified,
+							'post_modified_gmt' => $post_modified_gmt
+						),
+						array('post_parent' => $repertoire)
+					   );
+		  
+        $checked = get_post_meta($repertoire, 'repertoire-this-season'.$sup, true) == 'include' ? 'true' : 'false';
         
         echo $checked;
         
@@ -927,7 +1123,7 @@ function change_repertoire_this_season() {
   die();
 }
 add_action('wp_ajax_change_repertoire_this_season', 'change_repertoire_this_season');
-add_action('wp_ajax_nopriv_change_repertoire_this_season', 'change_repertoire_this_season'); // not really needed
+//add_action('wp_ajax_nopriv_change_repertoire_this_season', 'change_repertoire_this_season'); // not really needed
 
 
 /*----------------------------------------------------*/
@@ -984,7 +1180,7 @@ function register_repertoire() {
     'supports'            => array( 'title', 'thumbnail' ),//, 'custom-fields',
     'taxonomies'          => array( 'performer', 'composer', 'arranger', 'concert' ),
     'hierarchical'        => false,
-    'public'              => $user_can_view,
+	  'public'              => true,//$user_can_view,
     'show_ui'             => true,
     'show_in_menu'        => true,
     'show_in_nav_menus'   => true,
@@ -992,9 +1188,9 @@ function register_repertoire() {
     'menu_position'       => 28,
     'menu_icon'           => '',
     'can_export'          => true,
-    'has_archive'         => $user_can_view,
+	  'has_archive'         => true,//$user_can_view,
     'exclude_from_search' => !$user_can_view,
-    'publicly_queryable'  => $user_can_view,
+	  'publicly_queryable'  => true,//$user_can_view,
     'capabilities'        => $capabilities,
   );
   

@@ -32,7 +32,7 @@ function lowrez_dashboard_newmem_render() {
 	
 	$exp = new CFDBFormIterator();
 	$atts = array(
-		'filter' => 'processed!=approved&&processed!=ignored'
+		'filter' => 'processed!=approved&&processed!=rejected'
 	);
 	
 	$exp->export(CF_FORMNAME, $atts);
@@ -45,9 +45,9 @@ function lowrez_dashboard_newmem_render() {
 		
 		echo '
 <li>
-<a href="' . admin_url('admin.php?page=new-member-form&new-member='.$data['submit_time']) .'">
-<strong>'.$data['first-name'].' '.$data['last-name'].'</strong>
-</a>' . $time . '
+	<a href="' . admin_url('admin.php?page=new-member-form&new-member='.$data['submit_time']) .'">
+		<strong>'.$data['first-name'].' '.$data['last-name'].'</strong>
+	</a>' . $time . '
 </li>';
 		
 	}
@@ -125,7 +125,7 @@ function delete_member($id) {
 	echo('<div id="message" class="updated"><p>Deleted '.$count.' new member application'.$application.' permanently.</p></div>');
 }
 
-function ignore_member($id) {
+function reject_member($id) {
 	if (!is_array($id)) {
 		$id = array($id);
 	}
@@ -142,14 +142,14 @@ function ignore_member($id) {
 									$idz,
 									CF_FORMNAME,
 									'processed',
-									'ignored',
+									'rejected',
 									'99'));
 		
 	}
 	$count = count($id);
 	$application = $count==1 ? '' : 's';
 	
-	echo('<div id="message" class="updated"><p>Ignored '.$count.' new member application'.$application.'.</p></div>');
+	echo('<div id="message" class="updated"><p>Rejected '.$count.' new member application'.$application.'.</p></div>');
 }
 
 function make_new_member($id) {
@@ -217,7 +217,7 @@ function make_new_member($id) {
 					update_user_meta($u, 'date_of_birth', $m.'/'.$d);
 				}
 				update_user_meta($u, 'date_of_birth_y', $member['dob-year']);
-				
+								
 				$u = new WP_User( $u );
 				//$u->remove_role( 'subscriber' );
 				//$u->set_role( 'contributor' );
@@ -263,22 +263,6 @@ function make_new_member($id) {
 		}
 	}
 }
-
-
-function new_members_help( $contextual_help, $screen_id, $screen ) { 
-	
-	if ( in_array($screen->id, array('toplevel_page_new-members', 'admin_page_new-member-form') ) ) {
-		
-		$contextual_help = '<h2>New Member Applications</h2>
-<p>Click on a name to view the full application.</p> 
-<p>If you <strong>approve</strong> an application, a user account will be created and a welcome email will be sent to the applicant.</p>
-<p>If you <strong>ignore</strong> an application, the application will be moved to the <strong>Ignored</strong> tab and the applicant will not be notified.</p>
-';
-		
-	}
-	return $contextual_help;
-}
-add_action( 'contextual_help', 'new_members_help', 10, 3 );
 
 
 /************************** CREATE A PACKAGE CLASS *****************************
@@ -417,11 +401,11 @@ class New_Members_Table extends WP_List_Table {
 		$actions = array(
 			//'edit'      => sprintf('<a href="?page=%s&action=%s&new-member=%s">Edit</a>',$_REQUEST['page'],'edit',$item['submit_time']),
 			'make-member'      => sprintf('<a href="?page=%s&action=%s&new-member=%s">Approve</a>',$_REQUEST['page'],'make-member',$item['submit_time']),
-			'delete'      => sprintf('<a href="?page=%s&action=%s&new-member=%s">Ignore</a>',$_REQUEST['page'],'ignore-member',$item['submit_time'])//,
+			'delete'      => sprintf('<a href="?page=%s&action=%s&new-member=%s">Reject</a>',$_REQUEST['page'],'reject-member',$item['submit_time'])//,
 			//'delete'    => sprintf('<a href="?page=%s&action=%s&new-member=%s">Delete</a>',$_REQUEST['page'],'delete',$item['submit_time']),
 		);
 		
-		if ($item['processed']=='ignored') {
+		if ($item['processed']=='rejected') {
 			$actions['delete'] = sprintf('<a href="?page=%s&action=%s&new-member=%s">Delete</a>',$_REQUEST['page'],'delete-member',$item['submit_time']);
 		}
 		if ($item['processed']=='approved') {
@@ -562,7 +546,7 @@ class New_Members_Table extends WP_List_Table {
 		$actions = array(
 			//'delete'    => 'Delete',
 			'make-member'    => 'Approve Member',
-			'ignore-member'    => 'Ignore Member'
+			'reject-member'    => 'Reject Member'
 		);
 		return $actions;
 	}
@@ -587,11 +571,11 @@ class New_Members_Table extends WP_List_Table {
 				//FIXME
 			}
 			
-		} elseif ('ignore-member' === $this->current_action()) {
+		} elseif ('reject-member' === $this->current_action()) {
 			
 			if ($ms = $_GET['new-member']) {
 				unprocess_member($ms, true);
-				ignore_member($ms);
+				reject_member($ms);
 			} else {
 				wp_die('No member to edit!');
 				//FIXME
@@ -697,7 +681,7 @@ class New_Members_Table extends WP_List_Table {
 				//do nothing
 			}
 			elseif ($processed == 'unprocessed') {
-				$atts['filter'] = 'processed!=approved&&processed!=ignored';
+				$atts['filter'] = 'processed!=approved&&processed!=rejected';
 			}
 			else {
 				$atts['filter'] = 'processed='.$processed;
@@ -781,7 +765,7 @@ class New_Members_Table extends WP_List_Table {
 		
 		$processed_types = array('unprocessed' => 'Unprocessed',
 								 'approved' => 'Approved',
-								 'ignored' => 'Ignored');
+								 'rejected' => 'Rejected');
 		
 		$processed_links = array();
 		
@@ -819,7 +803,7 @@ function count_member_apps($processed = FALSE) {
 			//do nothing
 		}
 		elseif ($processed=='unprocessed') {
-			$attributes['filter'] = 'processed!=approved&&processed!=ignored';
+			$attributes['filter'] = 'processed!=approved&&processed!=rejected';
 		}
 		else {
 			$attributes['filter'] = 'processed='.$processed;
@@ -860,95 +844,95 @@ function newmem_form_render() {
 		<br/>
 	</div>
 	<h2>New Member Applications <a href="?page=new-members" class="add-new-h2">Back to Applications</a></h2>
-	<h3><?php _e('Application Form'); ?></h3>
+<h3><?php _e('Application Form'); ?></h3>
+
+<?php
+		$app = $_GET['new-member'];
+		$exp = new CFDBFormIterator();
+		$atts = array(
+			'filter' => 'submit_time='.$app
+		);
+		
+		$exp->export(CF_FORMNAME, $atts);
+		if ($data = $exp->nextRow()) :
+?>
+
+<table class="form-table">
+	<tr>
+		<th>Application Date</th>
+		<td><?php $time = strtotime($data['Submitted']);
+		echo date('j\&\n\b\s\p\;F Y, g:i\&\n\b\s\p\;a', $time);
+		echo ' <span class="description">('.time_passed($time) . ')</span>';
+			?></td>
+	</tr>
+	<tr>
+		<th>First Name</th>
+		<td><?php echo $data['first-name']; ?></td>
+	</tr>
+	<tr>
+		<th>Last Name</th>
+		<td><?php echo $data['last-name']; ?></td>
+	</tr>
+	<tr>
+		<th>Date of Birth</th>
+		<td><?php 
+		
+		$day = $data['dob-day'];
+		$mth = $data['dob-mth'];
+		$mth = $mth ? ' '.date('F',strtotime($mth)) : '';
+		$year = $data['dob-year'];
+		$year = $mth && $year ? ' '.$year : '';
+		
+		echo sprintf('%1$s%2$s%3$s', $day, $mth, $year);
+		
+			?></td>
+	</tr>
+	<tr>
+		<th>Email</th>
+		<td><?php echo sprintf('<a href="mailto:%1$s">%1$s</a>', trim($data['your-email'])); ?></td>
+	</tr>
+	<tr>
+		<th>Mobile Phone</th>
+		<td><?php echo format_mobile($data['mobile-phone'], 'display'); ?></td>
+	</tr>
+	<tr>
+		<th>Address</th>
+		<td><?php echo $data['address'] . '<br>' . $data['suburb'] . '&nbsp;' . $data['postcode']; ?></td>
+	</tr>
+	<tr>
+		<th>Reads Music</th>
+		<td><?php echo $data['read-music']; ?></td>
+	</tr>
+	<tr>
+		<th>Singing Experience</th>
+		<td><?php echo $data['sing-experience']; ?></td>
+	</tr>
+	<tr>
+		<th>Voice Type</th>
+		<td><?php echo $data['voice-part']; ?></td>
+	</tr>
+	<tr>
+		<th>Referral</th>
+		<td><?php echo $data['how-did-you-hear']; ?></td>
+	</tr>
+	<tr>
+		<th>Comments</th>
+		<td><?php echo $data['comments']; ?></td>
+	</tr>
+</table>
+<p class="submit">
+	<a href="?page=new-members&action=make-member&new-member=<?php echo $app; ?>" class="button button-primary">Approve Member</a>
+	<a href="?page=new-members&action=reject-member&new-member=<?php echo $app; ?>" class="button">Reject Member</a>
+</p>
 	
-	<?php
-							   $app = $_GET['new-member'];
-							   $exp = new CFDBFormIterator();
-							   $atts = array(
-								   'filter' => 'submit_time='.$app
-							   );
-							   
-							   $exp->export(CF_FORMNAME, $atts);
-							   if ($data = $exp->nextRow()) :
-	?>
-	
-	<table class="form-table">
-		<tr>
-			<th>Application Date</th>
-			<td><?php $time = strtotime($data['Submitted']);
-							   echo date('j\&\n\b\s\p\;F Y, g:i\&\n\b\s\p\;a', $time);
-							   echo ' <span class="description">('.time_passed($time) . ')</span>';
-				?></td>
-		</tr>
-		<tr>
-			<th>First Name</th>
-			<td><?php echo $data['first-name']; ?></td>
-		</tr>
-		<tr>
-			<th>Last Name</th>
-			<td><?php echo $data['last-name']; ?></td>
-		</tr>
-		<tr>
-			<th>Date of Birth</th>
-			<td><?php 
-							   
-							   $day = $data['dob-day'];
-							   $mth = $data['dob-mth'];
-							   $mth = $mth ? ' '.date('F',strtotime($mth)) : '';
-							   $year = $data['dob-year'];
-							   $year = $mth && $year ? ' '.$year : '';
-							   
-							   echo sprintf('%1$s%2$s%3$s', $day, $mth, $year);
-							   
-				?></td>
-		</tr>
-		<tr>
-			<th>Email</th>
-			<td><?php echo sprintf('<a href="mailto:%1$s">%1$s</a>', trim($data['your-email'])); ?></td>
-		</tr>
-		<tr>
-			<th>Mobile Phone</th>
-			<td><?php echo format_mobile($data['mobile-phone'], 'display'); ?></td>
-		</tr>
-		<tr>
-			<th>Address</th>
-			<td><?php echo $data['address'] . '<br>' . $data['suburb'] . '&nbsp;' . $data['postcode']; ?></td>
-		</tr>
-		<tr>
-			<th>Reads Music</th>
-			<td><?php echo $data['read-music']; ?></td>
-		</tr>
-		<tr>
-			<th>Singing Experience</th>
-			<td><?php echo $data['sing-experience']; ?></td>
-		</tr>
-		<tr>
-			<th>Voice Type</th>
-			<td><?php echo $data['voice-part']; ?></td>
-		</tr>
-		<tr>
-			<th>Referral</th>
-			<td><?php echo $data['how-did-you-hear']; ?></td>
-		</tr>
-		<tr>
-			<th>Comments</th>
-			<td><?php echo $data['comments']; ?></td>
-		</tr>
-	</table>
-	<p class="submit">
-		<a href="?page=new-members&action=make-member&new-member=<?php echo $app; ?>" class="button button-primary">Approve Member</a>
-		<a href="?page=new-members&action=ignore-member&new-member=<?php echo $app; ?>" class="button">Ignore Member</a>
-	</p>
-	
-	<?php else: ?>
-	
-	<p>No application on record.<p>
-	
-	<?php endif; ?>
+<?php else: ?>
+
+<p>No application on record.<p>
+
+<?php endif; ?>
 	</div>
 <?
-							  }
+}
 
 /***************************** LIST ********************************/
 function newmem_render() {

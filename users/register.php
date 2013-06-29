@@ -154,7 +154,6 @@ function wp_new_user_notification($user_id, $plaintext_pass = '', $extra_message
 <tr><th>Username</th><td>%s</td></tr>
 <tr><th>Password</th><td>%s</td></tr>
 </table>
-<p>You should change your password to something more memorable when you next log in.</p>
 %s', wp_login_url(), home_url(), $user_login, $plaintext_pass, $extra_message);
 	
 	wp_mail($user_email, 'Welcome to LOW REZ Members', $message, 'From: system@lowrez.com.au');

@@ -19,7 +19,7 @@
 						lst.push($rows[i]);
 					} else {
 						if (count > 1) {
-							ctrl.addClass('table-grouped').attr('rowspan', count);
+							ctrl.addClass('spanned').attr('rowspan', count);
 							groupTable($(lst), startIndex + 1, total - 1)
 						}
 						count = 1;
@@ -33,7 +33,7 @@
 				this.find('.deleted').hide();
 				
 				if (subtotal) {
-					this.find('.table-grouped').each( function() {
+					this.find('.spanned').each( function() {
 						$(this).append($('<small class="subtotal" />').text(' ('+$(this).attr('rowspan')+')'));
 					});
 				}

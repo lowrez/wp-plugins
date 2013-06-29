@@ -161,12 +161,20 @@ function lowrez_show_extra_profile_fields ( $user ) {
 	
 	$me = $user->ID == get_current_user_id();
 	
+	if (protect_code(array(2,3,17), $user->ID)) {
+	
 	$you_member = $me ? 'You' : 'Member';
 	$your_members = $me ? 'Your' : 'Member\'s';
 	
 	$tab = isset($_REQUEST['tab']) ? $_REQUEST['tab'] : 'membership';
 	
 	lowrez_admin_tabs($tab);
+		
+	}
+	else {
+		$tab = false;
+	}
+	
 	
 	switch ($tab) {
 		case 'membership':

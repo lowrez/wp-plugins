@@ -1,12 +1,5 @@
 <?php
 
-function lowrez_signups_scripts_frontend() {
-	global $post;
-	if( 'signup' != $post->post_type ) return;
-	lowrez_signups_scripts(false);
-}
-add_action( 'wp_enqueue_scripts', 'lowrez_signups_scripts_frontend' );
-
 function signup_head() {
 	$post_id = get_the_ID();
 	
@@ -71,7 +64,7 @@ function signup_body() {
 	$signup_meta = unserialize($user_signup['signup_meta']);
 	unset($user_signup['signup_meta']);
 
-	$signup_modify = 'Save Signup';//$user_signup ? 'Save Signup' : 'Sign Up';
+	$signup_modify = $user_signup ? 'Modify Signup' : 'Sign Up';
 	$user_signup = @array_merge($user_signup, $signup_meta);
 	
 
@@ -131,8 +124,8 @@ function signup_body() {
 			
 			$guest_dropdown = iter_responses_dropdown('bus_guest', do_guest_dropdown($bus_guest_max), $user_signup);
 			
-			$bus_guest = "<h5>Will you bring a partner/ friend(s) on the bus?</h5>
-<p>{$guest_dropdown} people (excluding yourself).</p>";//<span class=\"label label-warning\">New!</span>
+			$bus_guest = "<h5>Will you bring a partner/ friend(s) on the bus? <span class=\"label label-warning\">New!</span></h5>
+<p>{$guest_dropdown} people (excluding yourself).</p>";
 			
 		}
 		
@@ -184,80 +177,6 @@ function signup_body() {
 	return $open.$form;
 }
 
-function signup_responses_frontend() {
-	global $current_user;
-	$signup_body = signup_body();
-	
-	if (current_user_can('read_others_signups')) {
-		$signup_bus = '';
-	
-		if (user_is('section_leader')) {
-			$signup_others_title = 'Your Section’s Signups';
-			$part = get_user_meta($current_user->ID, 'voicepart', true);
-			$signup_others = get_signups_list_meta(false, $part);
-		}
-		else {
-			$signup_others_title = 'All Members’ Signups';
-			$signup_others = get_signups_list_meta(false);
-			if (get_post_meta(get_the_id(), 'signup_bus', true)) {
-				$signup_bus = get_signups_bus_list_meta(false);
-				
-				$signup_bus = <<<BUS
-<div class="accordion-group">
-<div class="accordion-heading">
-<a class="accordion-toggle" data-toggle="collapse" data-parent="#signup-accordion" href="#signup-bus">
-<h5>Bus List</h5>
-</a>
-</div>
-<div id="signup-bus" class="accordion-body collapse">
-<div class="accordion-inner">
-{$signup_bus}
-</div>
-</div>
-</div>
-BUS;
-			}
-		}
-		
-	$html = <<<HTML
-<div class="accordion" id="signup-accordion">
-  <div class="accordion-group">
-    <div class="accordion-heading">
-      <a class="accordion-toggle" data-toggle="collapse" data-parent="#signup-accordion" href="#signup-yours">
-		<h5>Your Signup</h5>
-      </a>
-    </div>
-    <div id="signup-yours" class="accordion-body collapse in">
-      <div class="accordion-inner">
-		{$signup_body}
-      </div>
-    </div>
-  </div>
-  <div class="accordion-group">
-    <div class="accordion-heading">
-      <a class="accordion-toggle" data-toggle="collapse" data-parent="#signup-accordion" href="#signup-others">
-		<h5>{$signup_others_title}</h5>
-      </a>
-    </div>
-    <div id="signup-others" class="accordion-body collapse">
-      <div class="accordion-inner">
-        {$signup_others}
-      </div>
-    </div>
-  </div>
-	{$signup_bus}
-</div>
-HTML;
-		
-	}
-	else {
-		$html = $signup_body;
-	}
-	
-	return $html;
-	
-}
-
 
 function iter_responses($field, $responses, $user_signup, $checkbox = false) {
 	$multiple = $checkbox ? '[]' : false;
@@ -300,4 +219,3 @@ function iter_responses_dropdown($field, $responses, $user_signup) {
 	}
 	return "<select id=\"{$field}\" name=\"{$field}\" style=\"width:auto;\">".implode(PHP_EOL, $responses)."</select>";
 }
-

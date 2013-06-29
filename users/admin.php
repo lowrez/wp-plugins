@@ -1,16 +1,18 @@
 <?php
 
-function user_is( $role ) {
-	global $current_user;
-	if (!is_array($role)) { $role = array($role); }
-	return (bool) count(array_intersect($role, $current_user->roles));
-}
-
 function lowrez_admin_head() {
 	echo '<link rel="stylesheet" type="text/css" href="' .plugins_url('wp-admin.css', __FILE__). '">';
 }
 
 add_action('admin_head', 'lowrez_admin_head');
+
+function bank_ref( $atts = false ){
+global $current_user;
+$q = floor((date('n')- 1) / 3) + 1;
+
+ return 'Q'.$q.' '.strtoupper($current_user->user_login);
+}
+add_shortcode( 'bank_ref', 'bank_ref' );
 
 /*---------------------------------------------*/
 /*User Data*/
@@ -75,9 +77,9 @@ function lowrez_user_views($views){
 	
 	return $views;
 }
-add_filter('views_users', 'lowrez_user_views', 10, 1);
+//add_filter('views_users', 'lowrez_user_views', 10, 1);
 
-add_filter('pre_user_query', 'lowrez_user_items', 10, 1);
+//add_filter('pre_user_query', 'lowrez_user_items', 10, 1);
 function lowrez_user_items(&$user_query) {
 	
 	if ( isset( $_REQUEST['voicepart'] ) )  {

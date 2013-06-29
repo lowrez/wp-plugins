@@ -13,4 +13,20 @@ jQuery(document).ready(function($) {
 	
 	jQuery('p.indicator-hint').hide();
 	
+	jQuery('#role').on('change', function() {
+		var vpart = jQuery('#voicepart').closest('tr');
+		
+		switch (jQuery(this).val()) {
+			case 'member':
+			case 'section_leader':
+			case 'committee':
+			case 'alumni':
+			case 'hiatus':
+				vpart.fadeIn();
+				break;
+			default:
+				vpart.fadeOut();	
+		}
+	});
+	
 });

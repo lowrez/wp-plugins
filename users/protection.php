@@ -11,10 +11,9 @@ function protect_code($only_groups = '1', $user_id = false) {
 	if (!$user_id) {
 		global $current_user;
 		$user_id = $current_user->ID;
+		
+		if (!$user_id) return false;
 	}
-	
-	if (user_can($user_id, 'manage_options')) return true;
-	
 	$user_groups = CTXPS_Queries::get_user_groups($user_id);
 	
 	if (!is_array($only_groups)) {
@@ -28,6 +27,14 @@ function protect_code($only_groups = '1', $user_id = false) {
 	}
 	
 	return true;
+	
+	/*foreach ( $user_groups as $group ) {
+	if ( in_array( $group->id, $user_groups ) ) {
+	return true;
+	}
+	}
+	
+	return false;*/
 	
 }
 

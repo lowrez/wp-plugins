@@ -3,7 +3,7 @@
 Plugin Name: LOW REZ Google Apps Interface
 Description: LOW REZ Google Apps Interface
 Author: LOW REZ
-Version: 1.1.1
+Version: 1.1.2
 */
 
 if(!class_exists('WP_List_Table')){
@@ -13,7 +13,7 @@ if(!class_exists('WP_List_Table')){
 add_action('admin_menu', 'lowrez_gapps_menu');
 
 function lowrez_gapps_menu(){
-	add_menu_page( 'Google Apps', 'Google Apps', 'promote_users', 'google-apps', 'render_lowrez_gapps_menu');
+	add_menu_page( 'Email Lists', 'Email Lists', 'promote_users', 'google-apps', 'render_lowrez_gapps_menu');
 	add_submenu_page( 'google-apps', 'Groups', 'Groups', 'promote_users', 'google-apps-group', 'render_lowrez_gapps_menu_groups');
 	add_submenu_page( 'google-apps', 'Users', 'Users', 'promote_users', 'google-apps-user', 'render_lowrez_gapps_menu_groups');
 	remove_submenu_page( 'google-apps', 'google-apps');
@@ -25,12 +25,14 @@ function render_lowrez_gapps_menu_groups(){
 	
 	$screen = get_current_screen();
 	
+	//print_pre($screen);
+	
 	switch ($screen->base) {
-		case 'google-apps_page_google-apps-user':
+		case 'email-lists_page_google-apps-user':
 		$type = 'user';
 		$id = $_GET['memberId'];
 		break;
-		case 'google-apps_page_google-apps-group':
+		case 'email-lists_page_google-apps-group':
 		$type = 'group';
 		$id = $_GET['groupId'];
 		break;
@@ -48,7 +50,7 @@ function render_lowrez_gapps_menu_groups(){
 	<div id="icon-edit" class="icon32 icon32-gapps">
 		<br/>
 	</div>
-	<h2>Google Apps</h2>
+	<h2>Email Lists</h2>
 	<h3><?php echo $table->table_title(); ?></h3>
 	<?php $table->display(); ?>
 </div>

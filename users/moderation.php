@@ -2,7 +2,7 @@
 
 //http://plugins.svn.wordpress.org/theme-my-login/trunk/modules/user-moderation/admin/user-moderation-admin.php
 
-add_filter('user_row_actions', 'lowrez_user_row_actions', 20, 2);
+//add_filter('user_row_actions', 'lowrez_user_row_actions', 20, 2);
 function lowrez_user_row_actions($actions, $user_object) {
 	
 	$current_user = wp_get_current_user();

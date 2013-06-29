@@ -14,7 +14,7 @@ function lowrez_retrieve_password_message( $message, $key = false ) {
 		$link = '-cannot-'; //htmlspecialchars($message, true);
 		}*/
 	
-	$new_message = sprintf('<p>A request has been made to reset your password on the LOW REZ Members\' website.</p>
+	$new_message = sprintf('<p>A request has been made to change your password on the LOW REZ Members\' website.</p>
 <p>If this was a mistake, you can ignore this message and nothing will change.</p>
 <p>To reset your password, visit the following address: <a href="%s">%s</a></p>
 <br>
