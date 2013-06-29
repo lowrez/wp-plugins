@@ -1,0 +1,29 @@
+#categorychecklist li {
+	background: no-repeat right 1px;
+}
+#categorychecklist #category-13 { /*enews*/
+	background-image: url(categories/inbox.png);
+	font-weight:bold;
+}
+#categorychecklist #category-19 { /*sms*/
+	background-image: url(categories/sms.png);
+	font-weight:bold;
+}
+#categorychecklist #category-124 { /*notice*/
+	background-image: url(categories/bullhorn.png);
+	font-weight:bold;
+}
+#categorychecklist #category-14 { /*practice*/
+	background-image: url(categories/music.png);
+	font-weight:bold;
+}
+#categorychecklist #category-5 { /*members*/
+	background-image: url(categories/lock.png);
+}
+#categorychecklist #category-7, /*all-members*/
+#categorychecklist #category-17, /*question*/
+#categorychecklist #category-121, /*arrangers*/
+#categorychecklist #category-3, /*fans*/
+#categorychecklist #category-20 { /*survey*/
+	display:none;
+}
