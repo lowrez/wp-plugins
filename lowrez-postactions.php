@@ -7,24 +7,6 @@ Author: LOW REZ
 Version: 1.0
 */
 
-/*function lowrez_expired_post_status() {
-	$args = array(
-		'label'                     => _x( 'expired', 'Status General Name', 'lowrez' ),
-		'label_count'               => _n_noop( 'Expired (%s)',  'Expired (%s)', 'lowrez' ),
-		'public'                    => true,
-		'show_in_admin_all_list'    => true,
-		'show_in_admin_status_list' => true,
-		'exclude_from_search'       => false,
-	);
-
-	register_post_status( 'expired', $args );
-}*/
-
-// Hook into the 'init' action
-//add_action( 'init', 'lowrez_expired_post_status', 0 );
-
-
-
 add_action( 'admin_enqueue_scripts', 'lowrez_category_icons' );
 function lowrez_category_icons( $hook_suffix ) {
 	
@@ -154,7 +136,7 @@ function lowrez_publish_post($post_id) {
 	
 	
 }
-////add_action('publish_post', 'lowrez_publish_post');
+//add_action('publish_post', 'lowrez_publish_post');
 
 
 function lowrez_error_enews() {

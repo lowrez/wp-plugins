@@ -1,0 +1,75 @@
+
+<div class="row-fluid">
+	<div class="span4">
+		<ul id="uploadmethods" class="nav nav-tabs">
+			<li><a href="#improved" data-toggle="tab">Advanced Uploader</a></li>
+			<li class="active"><a href="#basic" data-toggle="tab">Basic Uploader</a></li>
+		</ul>
+		<div class="tab-content">
+			<div id="improved" class="tab-pane">
+				<div id="dropzone" class="fade well" style="text-align:center;">
+					<p id="drophere"><strong>Drop Files Here</strong></p>
+					<p>or</p>
+					<p>
+						<span class="btn fileinput-button">
+							<span>Select Files</span>
+							<input id="fileupload" type="file" name="files[]" data-url="php/" multiple>
+						</span>
+					</p>
+				</div>
+				<p>
+					If you are experiencing problems uploading files, try the <a id="gobasic" href="#basic">Basic uploader</a>.
+				</p>
+				<div id="uploaderrors">
+					
+				</div>
+			</div>
+			<div id="basic" class="tab-pane active">
+				<form method="post" action="php/" enctype="multipart/form-data">
+					<input type="hidden" name="noscript" value="true">
+					<input type="hidden" name="redirect" value="<?php echo $_SERVER['PHP_SELF'].'#basic_uploader'; ?>">
+					<ul class="unstyled">
+						<li><input type="file" name="files[]" data-url="php/"></li>
+						<li><input type="file" name="files[]" data-url="php/"></li>
+						<li><input type="file" name="files[]" data-url="php/"></li>
+						<li><input type="file" name="files[]" data-url="php/"></li>
+						<li><input type="file" name="files[]" data-url="php/"></li>
+					</ul>
+					<input type="submit" value="Upload" class="btn" id="basicsubmit"><span id="loader" style="display:none;"></span>
+				</form>
+			</div>
+		</div>
+	</div>
+	<div class="span8">
+		<span id="nofile"><?php echo $upload_handler->get_file_icon('load'); ?></span><span id="errorfile"><?php echo $upload_handler->get_file_icon(false); ?></span>
+		<ul id="uploadfileslist" class="thumbnails">
+			<?php
+
+$width = 4;
+$files = $upload_handler->get_file_list($width);
+$listed = 0;
+
+$script = __FILE__;
+
+foreach( $files as $file ){
+	if(preg_match("/^\./", $file) || $file == $script): continue; endif;
+	
+	$listed++;	
+	
+	$url = $upload_handler->get_download_url($file);
+	
+	$icon = $upload_handler->get_file_icon($file);
+	
+	$file = sprintf('<a href="%s">%s</a>', $url, $file);
+	
+	echo "<li class=\"span{$width}\"><div class=\"media\"><a class=\"pull-left\" href=\"#\">{$icon}</a><div class=\"media-body\">{$file}</div></div></li>";
+}
+
+if ($listed==0) {
+	echo "<li class=\"span{$width} nofiles\">No files were found.</li>";
+}
+
+			?>
+		</ul>
+	</div>
+</div>

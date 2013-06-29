@@ -2,19 +2,10 @@
 
 /* ---------------------------------------------------------------- */
 
-function lowrez_signups_scripts($admin=true) {
-	wp_enqueue_script( 'jquery.tablegroup', plugins_url('/jquery.tablegroup.js', __FILE__) );
-	if ($admin) {
-		wp_enqueue_script( 'lowrez-signups', plugins_url('/lowrez-signups-admin.js', __FILE__) , array('jquery.tablegroup'));
-	}
-	else {
-		wp_enqueue_script( 'lowrez-signups', plugins_url('/lowrez-signups.js', __FILE__) , array('bootstrap', 'jquery.tablegroup'), false, true);
-	}
-}
-function lowrez_signups_scripts_admin($hook) {
+function lowrez_signups_scripts($hook) {
 	global $current_screen;
 	if( 'signup' != $current_screen->id ) return;
-	lowrez_signups_scripts(true);
+	wp_enqueue_script( 'jquery.tablegroup', plugins_url('/jquery.tablegroup.js', __FILE__) );
 }
 add_action( 'admin_enqueue_scripts', 'lowrez_signups_scripts' );
 
@@ -299,27 +290,19 @@ function signup_responses($field, $response) {
 			case 'bus_guest':
 			case 'meal_guest':
 			return $response;
-			case 'sort':
-			$signup_types = array('y'=>'AAA','n'=>'DDD','m'=>'BB');
-			break;
 			default:
 			$signup_types = array('y'=>'Yes','n'=>'No','m'=>'Maybe');
 		}
 		return $signup_types[$response] ? $signup_types[$response] : '<i>'.ucfirst($response).'</i>';
 	}
 	else {
-		if ($field=='sort') {
-			return 'CCC';
-		}
-		else {
-				return '&mdash;';
-		}
+		return '&mdash;';
 	}
 }
 
 /* ---------------------------------------------------------------- */
 
-function iter_users($part, $users, $signups=false, $heads=false, $admin = true) {
+function iter_users($part, $users, $signups=false, $heads=false) {
 	$count = 0;
 	
 	$part_name = $part == '-' ? 'Other' : format_voicepart($part);
@@ -331,7 +314,6 @@ function iter_users($part, $users, $signups=false, $heads=false, $admin = true) 
 			foreach ($users->results as $user) {
 				if (array_intersect($user->roles, array('member', 'section_leader', 'committee'))) {
 					$attend = signup_responses('attend', @$signups[$user->ID]->attend);
-					$attend_sort = signup_responses('sort', @$signups[$user->ID]->attend);
 					
 					$signup_meta = unserialize(@$signups[$user->ID]->signup_meta);
 					
@@ -359,7 +341,6 @@ function iter_users($part, $users, $signups=false, $heads=false, $admin = true) 
 					$us = array();
 					$us['name'] = $user->display_name;
 					$us['attend'] = $attend;
-					$us['attend_sort'] = $attend_sort;
 					$us['allheads'] = $allheads;
 					
 					$user_signups[] = $us;
@@ -372,22 +353,20 @@ function iter_users($part, $users, $signups=false, $heads=false, $admin = true) 
 	
 	foreach ($user_signups as $key => $row) {
 		$user_names[$key]  = $row['name'];
-		$user_attends[$key] = $row['attend_sort'];
+		$user_attends[$key] = $row['attend'];
 	}
 	
-	array_multisort($user_attends, SORT_ASC, $user_names, SORT_ASC, $user_signups);
-	
-	$part_head = $admin ? "<td><strong>{$part_name}</strong></td>" : '';
+	array_multisort($user_attends, SORT_DESC, $user_names, SORT_ASC, $user_signups);
 	
 	foreach ($user_signups as $us) {
-			$return .= "<tr>{$part_head}<td>{$us['attend']}</td><td>{$us['name']}</td>{$us['allheads']}</tr>";
+		$return .= "<tr><td><strong>{$part_name}</strong></td><td>{$us['attend']}</td><td>{$us['name']}</td>{$us['allheads']}</tr>";
 	}
 	
 	$count = count($user_signups);
 	
 	if ($count==0) {
 		$cols = count($heads)+1;
-		return "<tr>{$part_head}<td colspan=\"{$cols}\">None found.</td></tr>";
+		return "<tr><td><strong>{$part_name}</strong></td><td colspan=\"{$cols}\">None found.</td></tr>";
 	}
 	else {
 		return $return;
@@ -408,7 +387,7 @@ function iter_users_bus($signups, $heads=false) {
 			$signup_meta = unserialize($user->signup_meta);
 			//print_pre($signup_meta);
 			
-			if ($signup_meta['bus'] != 'n' && $signup_meta['bus'] != '') {
+			if ($signup_meta['bus'] != 'n') {
 				
 				$allheads = '';
 				if (is_array($heads)) {
@@ -471,18 +450,13 @@ function iter_users_bus($signups, $heads=false) {
 
 /* ---------------------------------------------------------------- */
 
-function signup_list_head($field, $width=20, $admin=true) {
-	if ($admin) {
-		return "<th style=\"padding:0;width:{$width}%\"><h3>{$field}</h3></th>";
-	}
-	else {
-		return "<th style=\"width:{$width}%\">{$field}</th>";
-	}
+function signup_list_head($field, $width=20) {
+	return "<th style=\"padding:0;width:{$width}%\"><h3>{$field}</h3></th>";
 }
 
 /* ---------------------------------------------------------------- */
 
-function signup_all_heads($heads = false, $admin = true) {
+function signup_all_heads($heads=false) {
 	
 	if (!$heads) $heads = signup_get_heads();
 	$listheads = '';
@@ -490,7 +464,7 @@ function signup_all_heads($heads = false, $admin = true) {
 	$width = 40/count($heads);
 	
 	foreach ($heads as $field=>$title) {
-		$listheads.=signup_list_head($title, $width, $admin);
+		$listheads.=signup_list_head($title, $width);
 	}
 	
 	return $listheads;
@@ -513,10 +487,6 @@ function signup_get_heads() {
 /* ---------------------------------------------------------------- */
 
 function set_signups_list_meta() {
-	echo get_signups_list_meta(true);
-}
-
-function get_signups_list_meta($admin = true,$part = false) {
 	global $post, $wpdb;
 	
 	$query = $wpdb->prepare("SELECT user_id, attend, signup_meta FROM {$wpdb->prefix}lowrez_signups
@@ -524,30 +494,9 @@ WHERE event_id = %d", $post->ID);
 	
 	$signups = $wpdb->get_results($query, OBJECT_K);
 	
-	if (!$part) {
-		$parts = array('t1','t2','bar','b');
-		$users = array();
-		foreach ($parts as $part) {
-			$users[$part] = new WP_User_Query(
-				array(
-					'meta_key' => 'voicepart',
-					'meta_value' => $part
-				)
-			);
-		}
-		$users['-'] = new WP_User_Query(
-			array('meta_query' => array(
-				array(
-					'key' => 'voicepart',
-					'value' => $parts,
-					'compare' => 'NOT IN'
-				)
-			) )
-		);
-		$parts[] = '-';
-	}
-	else {
-		$parts = array($part);
+	$parts = array('t1','t2','bar','b');
+	$users = array();
+	foreach ($parts as $part) {
 		$users[$part] = new WP_User_Query(
 			array(
 				'meta_key' => 'voicepart',
@@ -555,94 +504,49 @@ WHERE event_id = %d", $post->ID);
 			)
 		);
 	}
-		
+	$users['-'] = new WP_User_Query(
+		array('meta_query' => array(
+			array(
+				'key' => 'voicepart',
+				'value' => $parts,
+				'compare' => 'NOT IN'
+			)
+		) )
+	);
+	
+?>
+<script type="text/javascript">
+	jQuery(function () {
+		jQuery("#signups_list").tablegroup(0, 2, true);
+		jQuery('#signup_datelist .newdate a').data('addnew', jQuery('#signup_datelist .newdateblank').clone()).click( function(e) {
+			e.preventDefault();
+			jQuery('#signup_datelist .newdate').before(jQuery(this).data('addnew').clone());
+		});
+		jQuery('#signup_datelist').on('click', 'a.delbutton', function(e) {
+			e.preventDefault();
+			jQuery(this).closest('li').remove();
+		}); 
+	});
+</script>
+<table id="signups_list" class="signup-custom">
+	<?php
 	$heads = signup_get_heads();
-	$allheads = signup_all_heads($heads, $admin);
-	
-	
-	$iterusers = '';
-
-	if ($admin) {
-		
-		$groupheads = '<tr>'. signup_list_head('Part', 20, $admin).signup_list_head('Signup', 10, $admin).signup_list_head('Member', 20, $admin).$allheads . '</tr>';
-		
-		foreach ($parts as $part) {
-			$iterusers .= $groupheads;
-			$iterusers .= iter_users($part, $users, $signups, $heads);
-		}
-		
-		$table = <<<TABLE
-<table id="signups_list" class="signup-custom table table-condensed tablegroup">
-{$iterusers}
+	$allheads = signup_all_heads($heads);
+	?>
+	<?php $groupheads = '<tr>'. signup_list_head('Part').signup_list_head('Signup').signup_list_head('Member').$allheads . '</tr>'; ?>
+	<?php
+	$parts[] = '-';
+	foreach ($parts as $part) {
+		echo $groupheads;
+		echo iter_users($part, $users, $signups, $heads);
+	} ?>
 </table>
-TABLE;
-		
-	}
-	else {
-		
-		$groupheads = '<tr>'. signup_list_head('Signup', 10, false).signup_list_head('Member', 20, false).$allheads . '</tr>';
-		
-		$in = ' in';
-		foreach ($parts as $part) {
-			$part_name = format_voicepart($part);
-			if (!$part_name) $part_name = 'Unknown';
-			
-			$users_list = iter_users($part, $users, $signups, $heads, false);
-			$users_list = <<<TABLE
-<table id="signups_list" class="signup-custom table table-condensed tablegroup">
-	{$groupheads}
-	{$users_list}
-</table>
-TABLE;
-			if (count($parts)==1) {
-				//$iterusers .= "<h4>{$part_name}</h4>".$users_list;
-				
-				
-				$iterusers .= <<<ACCORDION
-<div class="accordion-group signup-parts">
-    <div class="accordion-heading">
-		<span class="accordion-toggle">
-			<h4>{$part_name}</h4>
-		</span>
-    </div>
-	<div class="accordion-body">
-      <div class="accordion-inner">
-		{$users_list}
-      </div>
-    </div>
-  </div>
-ACCORDION;
-				
-			}
-			else {			
-			$iterusers .= <<<ACCORDION
-<div class="accordion-group signup-parts">
-    <div class="accordion-heading">
-		<a class="accordion-toggle" data-toggle="collapse" href="#collapse-{$part}">
-			<h4>{$part_name}</h4>
-		</a>
-    </div>
-	<div id="collapse-{$part}" class="accordion-body collapse{$in}">
-      <div class="accordion-inner">
-		{$users_list}
-      </div>
-    </div>
-  </div>
-ACCORDION;
-		}
-			$in = '';
-		}
-		
-		$table = $iterusers;
-		
-	}
-	
-	return $table;
+<?php
 }
 
 /* ---------------------------------------------------------------- */
 
-function get_signups_bus_list_meta($admin=true) {
+function set_signups_bus_list_meta() {
 	global $post, $wpdb;
 	
 	$query = $wpdb->prepare("
@@ -655,24 +559,19 @@ ORDER BY display_name", $post->ID);
 	
 	$signups = $wpdb->get_results($query, OBJECT_K);
 	
-	$heads = array();	
-	$heads['bus'] = 'Bus'; $heads['bus_guest'] = 'Guests';
-	$groupheads = '<tr>'. signup_list_head('Member', 20, $admin).signup_list_head('Bus', 10, $admin).signup_list_head('Guests', 10, $admin).signup_list_head('Singing', 10, $admin) . '</tr>';
-	
-	$users_bus = iter_users_bus($signups, $heads);
-	
-	$html = <<<HTML
-<table id="signups_bus_list" class="signup-custom table table-condensed">
-{$groupheads}
-{$users_bus}
+?>
+<table id="signups_bus_list" class="signup-custom">
+	<?php
+$heads = array();	
+$heads['bus'] = 'Bus'; $heads['bus_guest'] = 'Guests';
+	?>
+	<?php $groupheads = '<tr>'. signup_list_head('Member').signup_list_head('Bus').signup_list_head('Guests').signup_list_head('Singing') . '</tr>';
+	echo $groupheads;?>
+	<?php
+		echo iter_users_bus($signups, $heads);
+	?>
 </table>
-HTML;
-	
-	return $html;
-}
-
-function set_signups_bus_list_meta() {
-	echo get_signups_bus_list_meta(true);
+<?php
 }
 
 

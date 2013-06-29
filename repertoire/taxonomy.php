@@ -296,20 +296,6 @@ function repertoire_remove_protection() {
 <?php
 }
 
-//add_filter('edit_tags_per_page', 'terms_default_sort');
-//add_filter('edit_categories_per_page', 'terms_default_sort');
-
-/*add_filter("manage_edit-performer_columns", 'terms_default_sort'); 
-
-function terms_default_sort($columns) {
-	if ( empty( $_REQUEST['orderby'] ) ) {
-		$_REQUEST['orderby'] = 'slug';
-		$_REQUEST['order'] = 'asc';
-	}
-	
-	return $columns;
-	}*/
-
 
 /*// Add to admin_init function   
 add_filter("manage_shiba_theme_custom_column", 'manage_theme_columns', 10, 3);

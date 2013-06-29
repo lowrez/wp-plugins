@@ -100,7 +100,7 @@ function set_repertoire_meta() {
 	</tr>
 </table>
 <?php
-	echo '<input type="hidden" name="repertoire_noncename" value="' . wp_create_nonce(__FILE__) . '" />';
+	echo '<input type="hidden" name="repertoire_media_noncename" value="' . wp_create_nonce(__FILE__) . '" />';
 }
 
 /* -------------------------------------------------------- */
@@ -108,11 +108,9 @@ function set_repertoire_meta() {
 function set_repertoire_this_season() {
 	global $post;
 	$this_season = get_post_meta($post->ID, 'repertoire-this-season', true);
-	$this_season_sup = get_post_meta($post->ID, 'repertoire-this-season-sup', true);
 ?>
 
 <p><label><input type="checkbox" name="repertoire-this-season" value="include" <?php checked( $this_season, 'include' ); ?> />&nbsp; Include in this season's repertoire? </label></p>
-<p><label><input type="checkbox" name="repertoire-this-season-sup" value="include" <?php checked( $this_season_sup, 'include' ); ?> />&nbsp; Include in <i>supplementary</i> repertoire? </label></p>
 <p class="description">All repertoire media will be shown on the This Season page and included in the podcast.</p>
 
 <?php
@@ -202,7 +200,7 @@ function set_repertoire_media_title() {
 	$not_exists = repertoire_media_exists($post->ID);
 	echo '<div id="titlediv" style="padding-left:0;">
 <div id="titlewrap"><span id="title" style="border:none;background:0;padding-left:0;">'.$post->post_title.$not_exists.'</span></div>';
-	if (false && $post->post_status == 'publish') {
+	if ($post->post_status == 'publish') {
 		echo '<div id="edit-slug-box" style="padding-left:0;">
 <strong>Permalink:</strong>
 <span id="sample-permalink">'.get_permalink($post->ID).'</span>&lrm;
@@ -281,7 +279,6 @@ function set_repertoire_media_metadata() {
 			  case 'audio/mp3':
 			  $fields = array(
 				  'podcast_title' => 'Title',
-				  //'original_artist' => 'Original Artist',
 				  'podcast_album' => 'Album',
 				  'podcast_artist' => 'Artist',
 				  'podcast_album_artist' => 'Album Artist',
@@ -294,38 +291,11 @@ function set_repertoire_media_metadata() {
 		  }
 		  
 		if ($fields) {
-			$album_cover = $custom['podcast_album_cover'][0];
-			
-			/*$performers = wp_get_object_terms($post->post_parent, 'performer');
-			$performer_dropdown = false;
-			
-			if (count($performers)>1) { 
-				$performer_dropdown = "<select name='primary_performer' id='primary_performer'>";
-				foreach ($performers as $term) {
-					$performer_dropdown .= sprintf('<option value="%s"%s>%s</option>', $term->term_id, selected($custom['primary_performer'][0], $term->term_id, false), $term->name);
-				}
-				$performer_dropdown .= "</select>";
-			}*/
-			
 			foreach ($fields as $meta_key => $label) {
 				$i++;
-				$last = !empty($albumcover) && $i == count($fields) ? ' style="border-bottom:none;"' : false;
-				
-				/*if ($meta_key == 'original_artist' && $performer_dropdown) {
-					$field = $performer_dropdown;
-				}
-				else {*/
-					$field = $custom[$meta_key][0];
-				/*}*/
-				
-				printf('<div class="misc-pub-section"%s>%s: <strong>%s</strong></div>', $last, $label, $field);
+				$last = $i == count($fields) ? ' style="border-bottom:none;"' : false;
+				printf('<div class="misc-pub-section"%s>%s: <strong>%s</strong></div>', $last, $label, $custom[$meta_key][0]);
 			}
-			
-			if ($album_cover) {
-				$album_cover = str_replace('/home/lowrez/_prod/podcast/albumcover/', 'http://podcast.lowrez.com.au/album/', $album_cover);
-				printf('<div class="misc-pub-section" style="text-align:center;border-bottom:none;"><img src="%s" style="max-width:100%%;" /></div>', $album_cover);
-			}
-			
 		}
 		else {
 			echo '<div class="misc-pub-section" style="border-bottom:none;"><p class="description">No metadata can be read for this file.</p></div>';
@@ -346,23 +316,9 @@ function set_repertoire_media_meta() {
 ?>
 <table class="repertoire-custom repertoire-media-custom-meta">
 	<tr>
-		<td colspan="3">
-			<label for="parent_id">Repertoire:</label>
-			<?php wp_dropdown_repertoire('parent_id', $post->post_parent); ?> <a href="<?php echo admin_url('post-new.php?post_type=repertoire') ?>" class="button" target="_blank">Add New</a>
+		<td colspan="3"><?php wp_dropdown_repertoire('parent_id', $post->post_parent); ?> <a href="<?php echo admin_url('post-new.php?post_type=repertoire') ?>" class="button" target="_blank">Add New</a>
 			<?php if ($post->post_parent) { ?>
 			<a id="view_parent_repertoire" href="<?php echo admin_url('post.php?action=edit&post='.$post->post_parent ) ?>" class="button">Edit Repertoire</a>
-			<?php
-		$performers = wp_get_object_terms($post->post_parent, 'performer');
-										   
-										   if (count($performers)>1) { 
-											   $performer_dropdown = "<select name='primary_performer' id='primary_performer'>";
-											   foreach ($performers as $term) {
-												   $performer_dropdown .= sprintf('<option value="%s"%s>%s</option>', $term->term_id, selected($custom['primary_performer'][0], $term->term_id, false), $term->name);
-											   }
-											   $performer_dropdown .= "</select>";
-											   
-											   echo "</td></tr><tr id='primary_performer_tr'><td colspan='3'><label for='primary_performer'>Original Performer:</label> $performer_dropdown";
-										   } ?>
 			<?php } ?>
 		</td>
 	</tr>
@@ -372,14 +328,13 @@ function set_repertoire_media_meta() {
 		<th style="padding:0;"><h3>Concert</h3></th>
 	</tr>
 	<tr>
-		<td><?php $box = array('args' => array('taxonomy' => 'media-type')); post_taxonomy_meta_box($post, $box); ?>
-		</td>
+		<td><?php $box = array('args' => array('taxonomy' => 'media-type')); post_taxonomy_meta_box($post, $box); ?></td>
 		<td><?php $box = array('args' => array('taxonomy' => 'part')); post_taxonomy_meta_box($post, $box); ?></td>
 		<td><?php $box = array('args' => array('taxonomy' => 'concert')); post_taxonomy_meta_box($post, $box); ?></td>
 	</tr>
 </table>
 <?php
-	echo '<input type="hidden" name="repertoire_media_noncename" value="' . wp_create_nonce(__FILE__) . '" />';
+	echo '<input type="hidden" name="repertoire_noncename" value="' . wp_create_nonce(__FILE__) . '" />';
 }
 
 // Save the meta data
@@ -388,10 +343,14 @@ function save_repertoire_media_meta($post_id) {
 	global $post;
 	
 	// make sure data came from our meta box
-
+	if (!wp_verify_nonce($_POST['repertoire_media_noncename'],__FILE__)) return $post_id;
 	
 	if (@$_POST['post_type'] == "repertoire-media") {
-		if (!wp_verify_nonce($_POST['repertoire_media_noncename'],__FILE__)) return $post_id;
+		
+		if(isset($_POST['parent_id'])) {
+			$data = $_POST['parent_id'];
+			update_post_meta($post_id, 'parent_id', $data);
+		}
 		
 		if ($taxons = @$_POST['tax_input']['part']) {
 			foreach ($taxons as $term_id) {
@@ -415,27 +374,15 @@ function save_repertoire_media_meta($post_id) {
 			}
 		}
 		
-		$meta_keys = array('parent_id', 'primary_performer');
-		
-		foreach ($meta_keys as $meta_key) {
-			if ($_POST[$meta_key]) {
-				update_post_meta($post_id, $meta_key, $_POST[$meta_key]);
-			}
-			else {
-				delete_post_meta($post_id, $meta_key);
-			}
-		}
-		
 	}
 	elseif (@$_POST['post_type'] == "repertoire") {
-		if (!wp_verify_nonce($_POST['repertoire_noncename'],__FILE__)) return $post_id;
 		
 		$taxons = $_POST['tax_input'];
 		
 		//print_pre($_POST);
 		//wp_die();
 		
-		$meta_keys = array('copyright_notice', 'song_year', 'arrangement_year', 'repertoire-this-season', 'repertoire-this-season-sup');
+		$meta_keys = array('copyright_notice', 'song_year', 'arrangement_year', 'repertoire-this-season');
 		
 		foreach ($meta_keys as $meta_key) {
 			if ($_POST[$meta_key]) {
@@ -455,18 +402,6 @@ function save_repertoire_media_meta($post_id) {
 		}
 		
 		$_POST['tax_input'] = $taxons;
-		
-		global $wpdb;
-		
-		$post_modified = current_time( 'mysql' );
-		$post_modified_gmt = current_time( 'mysql', 1 );
-		$wpdb->update($wpdb->posts,
-					  array(
-						  'post_modified' => $post_modified,
-						  'post_modified_gmt' => $post_modified_gmt
-					  ),
-					  array('post_parent' => $post_id)
-					 );
 		
 	}
 }
@@ -488,21 +423,6 @@ function repertoire_media_select_url() {
 			jQuery(this).select();
 		}).on('mouseup', function(e) {
 			e.preventDefault();
-		});
-
-		jQuery('#primary_performer').detach().appendTo(jQuery('li#media-type-298'));
-		if (!jQuery(this).is(':checked')) {
-			jQuery('#primary_performer').hide();
-		} 
-		
-		jQuery('#primary_performer_tr').remove();
-		
-		jQuery('#in-media-type-298').on('change', function() {
-			if (jQuery(this).is(':checked')) {
-				jQuery('#primary_performer').fadeIn();
-			} else {
-				jQuery('#primary_performer').fadeOut();
-			}
 		});
 	});
 </script>

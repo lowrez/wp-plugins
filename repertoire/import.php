@@ -42,7 +42,7 @@ class ImportRepertoireMedia {
 	
 	private $_url = 'http://files.lowrez.com.au/media/%s/repertoire/%s';
 	private $_path = '/home/lowrez/_files/repertoire/';
-	private $_dir = '';//_test/';//this-season/testing';
+	private $_dir = '_test/';//this-season/testing';
 	private $_uploading = '_uploading';
 	private $_processing = '_processing';
 	private $_files;
@@ -272,12 +272,6 @@ class ImportRepertoireMedia {
 	
 	function admin_menu() {
 		add_submenu_page('edit.php?post_type=repertoire-media', 'Upload Repertoire Media', 'Upload Media', 'publish_posts', 'upload-repertoire', array(&$this, 'admin_submenu_upload_repertoire_media') );
-		add_submenu_page('edit.php?post_type=repertoire', 'Repertoire Library', 'Repertoire Library', 'publish_posts', 'repertoire-library', array(&$this, 'admin_submenu_repertoire_library') );
-	}
-	
-	function admin_submenu_repertoire_library() {
-		//wp_redirect('http://www.lowrez.com.au/repertoire');
-		echo '<iframe style="width:100%;min-height:800px;height:100%;border:none;" frameborder="0" seamless="seamless" src="http://www.lowrez.com.au/repertoire" />';
 	}
 	
 	
@@ -386,7 +380,7 @@ class ImportRepertoireMedia {
 <div class="percent">Imported</div>
 <div class="bar" style="width: 200px;"></div>
 </div>';
-					$this->import_server_file($file, 0, 'now'); //FIXME
+					$this->import_server_file($file);
 					echo '    </div>';
 				}
 				
@@ -445,7 +439,7 @@ class ImportRepertoireMedia {
 <div class="percent">Imported</div>
 <div class="bar" style="width: 200px;"></div>
 </div>';
-							$this->import_server_file($tmpfile, 0, 'now', $filename);//FIXME
+							$this->import_server_file($tmpfile, 0, 'file', $filename);
 							echo '    </div>';
 							
 						}
@@ -496,7 +490,7 @@ class ImportRepertoireMedia {
 <div class="percent">Imported</div>
 <div class="bar" style="width: 200px;"></div>
 </div>';
-					$this->import_server_file($tmpfile, 0, 'now', urldecode($file));//FIXME
+					$this->import_server_file($tmpfile, 0, 'file', urldecode($file));
 					echo '    </div>';
 				}
 				
