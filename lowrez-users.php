@@ -67,3 +67,12 @@ function wp_check_password($password, $hash, $user_id = '') {
 	}
 	
 }
+
+add_filter('wp_authenticate_user', 'check_cancelled_user',10,1);
+function check_cancelled_user ($user) {
+    if( !count( $user->roles ) ) {
+		$user = new WP_Error('authentication_failed', __('<strong>ERROR</strong>: Invalid username or incorrect password.'));
+	}
+	
+	return $user;
+}
